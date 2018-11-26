@@ -1,0 +1,10 @@
+{
+  "name": "@ifaxity/jwt",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Christian Norrman <christian@faxity.se>",
+  "license": "MIT",
+  "dependencies": {
+    "jws": "^3.1.5"
+  }
+}
