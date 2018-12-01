@@ -4,6 +4,7 @@
  * https://github.com/auth0/node-jsonwebtoken
 */
 const { TokenError, TokenExpiredError, TokenNotBeforeError } = require('./src/lib/error');
+const { ALGORITHMS } = require('jws');
 
 module.exports = {
   sign: require('./src/sign'),
@@ -12,4 +13,5 @@ module.exports = {
   TokenError,
   TokenExpiredError,
   TokenNotBeforeError,
+  ALGORITHMS,
 };

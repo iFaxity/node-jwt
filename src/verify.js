@@ -37,6 +37,10 @@ const optionsModel = createModel({
     type: Boolean,
     default: false,
   },
+  ignoreNotBefore: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // Validates the optional claims
@@ -97,14 +101,14 @@ function validateClaims(payload, opts) {
   }
 
   // Check if claim is within the specified max age
-  if(opts.maxAge) {
+  if(opts.maxAge && opts.maxAge > 0) {
     if (typeof payload.iat != 'number') {
       throw new TokenError('Payload iat required when maxAge is set');
     }
 
     const maxAge = opts.maxAge + payload.iat + opts.clockTolerance;
     if (timestamp >= maxAge) {
-      throw new TokenExpiredError('Token maxAge exceeded', new Date(maxAgeTimestamp * 1000));
+      throw new TokenExpiredError('Token maxAge exceeded', new Date(maxAge * 1000));
     }
   }
 }
