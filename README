@@ -1,6 +1,0 @@
-
-
-Code heavily based on jsonwebtoken package on npm
-https://github.com/auth0/node-jsonwebtoken
-
-Most of the code is cut down or remodeled to fit modern Node environments (Node 6.x>=).
