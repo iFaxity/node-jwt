@@ -4,6 +4,9 @@
   "main": "index.js",
   "author": "Christian Norrman <christian@faxity.se>",
   "license": "MIT",
+  "engines": {
+    "node": ">=7.6"
+  },
   "dependencies": {
     "jws": "^3.1.5"
   }
