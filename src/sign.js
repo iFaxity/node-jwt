@@ -62,7 +62,7 @@ module.exports = function (payload, secret, opts = {}) {
       payload = Object.assign({}, payload);
 
       if (!secret && opts.algo != 'none') {
-        throw new TokenError(`Private key must have a value`);
+        throw new TokenError(`Secret undefined`);
       } else if (typeof payload != 'object') {
         throw new TokenError('Payload is not an object');
       }

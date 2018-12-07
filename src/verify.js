@@ -54,7 +54,7 @@ function validateClaims(payload, opts) {
     const strMatch = (reg, str) => reg instanceof RegExp ? reg.test(str) : reg === str;
 
     if (!aud.some(b => audience.some(a => strMatch(a, b)))) {
-      throw new TokenError('Audience(s) invalid');
+      throw new TokenError('Audience(s) not matched');
     }
   }
 
@@ -63,21 +63,21 @@ function validateClaims(payload, opts) {
     const issuers = Array.isArray(opts.issuer) ? opts.issuer : [opts.issuer];
 
     if (!issuers.includes(payload.iss)) {
-      throw new TokenError('Issuer(s) invalid');
+      throw new TokenError('Issuer(s) not matched');
     }
   }
 
   // Subject claim
   if (opts.subject && opts.subject != payload.sub) {
-    throw new TokenError('Subject invalid');
+    throw new TokenError('Subject not matched');
   }
   // JWT ID claim
   if (opts.jwtId && opts.jwtId != payload.jti) {
-    throw new TokenError('JWT Id invalid');
+    throw new TokenError('JWT Id not matched');
   }
   // Nonce claim
   if (opts.nonce && opts.nonce != payload.nonce) {
-    throw new TokenError('Nonce invalid');
+    throw new TokenError('Nonce not matched');
   }
 
   // Check expiration last. Makes it easier to catch expiration errors for token renewing.
@@ -108,7 +108,7 @@ function validateClaims(payload, opts) {
 
     const maxAge = opts.maxAge + payload.iat + opts.clockTolerance;
     if (timestamp >= maxAge) {
-      throw new TokenExpiredError('Token maxAge exceeded', new Date(maxAge * 1000));
+      throw new TokenExpiredError('MaxAge exceeded', new Date(maxAge * 1000));
     }
   }
 }
@@ -129,30 +129,30 @@ module.exports = function(token, secret, opts = {}) {
 
       // Validate the token
       if(!token) {
-        throw new TokenError('No token provided');
+        throw new TokenError('Token undefined');
       } else if(typeof token != 'string') {
-        throw new TokenError('Token needs to be a string');
+        throw new TokenError('Token is not of correct typestring');
       }
 
       // Verify token format
       const parts = token.split('.');
       if (parts.length != 3) {
-        throw new TokenError('Token format not valid');
+        throw new TokenError('Token format invalid');
       }
 
       // Decode the token
       const decodedToken = decode(token, true);
       if (!decodedToken) {
-        throw new TokenError('Token is not valid');
+        throw new TokenError('Token invalid');
       }
 
 
       // Validate signature & secret
       const hasSign = parts[2].trim() !== '';
       if (!hasSign && secret) {
-        throw new TokenError('JWT signature is required');
+        throw new TokenError('Token no signature');
       } else if (hasSign && !secret) {
-        throw new TokenError('Secret is required');
+        throw new TokenError('Secret undefined');
       } else if (!hasSign && !secret) {
         opts.algos = ['none'];
       }
