@@ -3,7 +3,7 @@
  * Code heavily based on jsonwebtoken package on npm
  * https://github.com/auth0/node-jsonwebtoken
 */
-const { TokenError, TokenExpiredError, TokenNotBeforeError } = require('./src/lib/error');
+const { TokenError, TokenExpiredError, TokenNotBeforeError } = require('./src/lib/errors');
 const { ALGORITHMS } = require('jws');
 
 module.exports = {
