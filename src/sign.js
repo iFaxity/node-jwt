@@ -1,7 +1,7 @@
 // Module for signing and verifying JWT tokens
 const jws = require('jws');
 const createModel = require('./lib/model');
-const { TokenError } = require('./lib/error');
+const { TokenError } = require('./lib/errors');
 
 const { ALGORITHMS } = jws;
 const PAYLOAD_CLAIMS = {

@@ -3,7 +3,7 @@ const jws = require('jws');
 const decode = require('./decode');
 const createModel = require('./lib/model');
 
-const { TokenError, TokenExpiredError, TokenNotBeforeError } = require('./lib/error');
+const { TokenError, TokenExpiredError, TokenNotBeforeError } = require('./lib/errors');
 const { ALGORITHMS } = jws;
 
 // Factory function to model the options

@@ -1,4 +1,4 @@
-exports.TokenError = class TokenError extends Error {
+class TokenError extends Error {
   constructor(message) {
     super(message);
 
@@ -8,16 +8,20 @@ exports.TokenError = class TokenError extends Error {
   }
 }
 
-exports.TokenExpiredError = class TokenExpiredError extends TokenError {
+class TokenExpiredError extends TokenError {
   constructor(message, expiredAt) {
     super(message);
     this.expiredAt = expiredAt;
   }
 }
 
-exports.TokenNotBeforeError = class TokenNotBeforeError extends TokenError {
+class TokenNotBeforeError extends TokenError {
   constructor(message, date) {
     super(message);
     this.date = date;
   }
 }
+
+exports.TokenError = TokenError;
+exports.TokenExpiredError = TokenExpiredError;
+exports.TokenNotBeforeError = TokenNotBeforeError;
