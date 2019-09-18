@@ -1,111 +1,92 @@
-// Creates a valid model object from a model
-function parseModel(model) {
-  const keys = Object.keys(model);
+/**
+ * Validates a prop model against a value before setting it
+ * Throws an error as soon as a check fails
+ */
+function validateProp(prop, model, value) {
+  const types = model.type;
 
-  return keys.forEach(prop => {
-    let obj = { type: model[prop] };
-
-    if (typeof obj.type == 'object') {
-      const item = obj.type;
-      obj = { type: Array.isArray(item) ? item : item.type };
-
-      if (typeof item.validator == 'function') {
-        obj.validator = item.validator;
-      }
-      if ('default' in item) {
-        obj.default = item.default;
-      }
-
-      obj.required = !!item.required;
-    }
-    
-    // Validate type
-    if (Array.isArray(obj.type)) {
-      if (!obj.type.every(type => typeof type == 'function')) {
-        throw new Error(`Model types are invalid in property '${prop}'!`);
-      }
-    } else if (typeof obj.type != 'function') {
-      throw new Error(`Model type is invalid in property '${prop}'!`);
-    }
-
-    model[prop] = obj;
-  });
-}
-
-// Gets all default values from a model object
-function getDefaults(model) {
-  const keys = Object.keys(model);
-
-  return keys.filter(prop => {
-    let isIn = 'default' in model[prop];
-    return isIn;
-  }).reduce((acc, prop) => {
-    let def = model[prop].default;
-
-    // Run default value if it's a function
-    if (typeof def == 'function') {
-      def = def();
-    }
-
-    acc[prop] = def;
-    return acc;
-  }, {});
-}
-
-// Verifies object types with a value
-function verifyType(obj, value) {
-  const checkType = type => Object.getPrototypeOf(value) == type.prototype;
-
-  if (Array.isArray(obj.type)) {
-    return obj.type.some(checkType);
+  // Type checking
+  if (value != null && !types.some(t => Object.getPrototypeOf(value) == t.prototype)) {
+    throw new Error(`Type error in prop '${prop}'.`);
   }
-  return checkType(obj.type);
-}
 
-/*
-Example model:
-{
-  foo: String,
-  bar: {
-    type: Number,
-    validator: value => value > 0,
-  },
-  baz: {
-    type: Array,
-    // Objects & arrays needs function to instansiate the default value
-    default: () => [ '1' ]
+  // Custom validator check
+  if (model.validator && !model.validator(value)) {
+    throw new Error(`Validation error in prop '${prop}'.`);
   }
-}
-*/
+};
 
-module.exports = function createModel(model) {
-  parseModel(model);
-  const defaults = getDefaults(model);
+/**
+ * Parses props object into something the validator can handle
+ */
+function parseProps(props) {
+  return Object.entries(props)
+    .map(pair => {
+      const [ key, obj ] = pair;
 
-  return function(opts) {
+      if (typeof obj == 'function' || Array.isArray(obj)) {
+        pair[1] = { type: obj };
+      } else if (typeof obj != 'object') {
+        throw new Error(`Prop type invalid for prop ${key}.`);
+      }
+
+      return pair;
+    })
+    .reduce((acc, [ key, model ]) => {
+      const { validator } = model;
+      const types = Array.isArray(model.type) ? model.type : [model.type];
+      const defType = typeof model.default;
+      let def;
+
+      // Validate types
+      if (!types.every(t => typeof t == 'function')) {
+        throw new TypeError(`Type invalid in prop '${key}'!`);
+      }
+
+      // Parse default value
+      if (defType == 'object') {
+        throw new TypeError('Prop defaults must be a primitive value, wrap objects and arrays using a function.');
+      } else if (defType == 'function') {
+        def = model.default;
+      } else {
+        def = model.default;
+        if (defType == 'undefined' && types.length == 1 && types[0] === Boolean) {
+          def = false;
+        }
+      }
+
+      acc[key] = {
+        type: types,
+        default: def,
+        validator: typeof validator == 'function' ? validator : null,
+      };
+      return acc;
+    }, {});
+};
+
+/**
+ * Creates a function that can validate props multiple times
+ */
+module.exports = function createModel(props) {
+  const model = parseProps(props);
+
+  return opts => {
     // Check model for every prop
     return Object.keys(model).reduce((acc, key) => {
       const obj = model[key];
-      const value = opts[key];
+      let value = opts[key];
 
-      if (typeof value != 'undefined') {
-        // Type checking
-        if (!verifyType(obj, value)) {
-          throw new Error(`Type error in model. In property: '${key}'.`);
-        }
-        // Custom validator check
-        if (typeof obj.validator == 'function' && !obj.validator(value)) {
-          throw new Error(`Custom validator error in model in property '${key}'`);
-        }
+      // Set default value (if available)
+      if (typeof value == 'undefined') {
+        const type = typeof obj.default;
 
-        acc[key] = value;
-      }  else if (key in defaults) {
-        // Set default value
-        acc[key] = defaults[key];
-      } else if (obj.required) {
-        // No value and required
-        throw new Error(`Value is required for '${key}'.`);
+        if (type != 'undefined') {
+          value = type == 'function' ? obj.default() : obj.default;
+        }
       }
+
+      validateProp(key, obj, value);
+      acc[key] = value;
       return acc;
     }, {});
   };

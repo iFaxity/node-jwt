@@ -2,17 +2,16 @@
 const jws = require('jws');
 const decode = require('./decode');
 const createModel = require('./lib/model');
-
 const { TokenError, TokenExpiredError, TokenNotBeforeError } = require('./lib/errors');
+
 const { ALGORITHMS } = jws;
 
 // Factory function to model the options
-const optionsModel = createModel({
+const parseModel = createModel({
   algos: {
     type: Array,
     validator: value => value.every(n => ALGORITHMS.includes(n)),
   },
-
   audience: [String, RegExp, Array],
   issuer: [String, Array],
   subject: String,
@@ -24,7 +23,6 @@ const optionsModel = createModel({
     type: Number,
     default: 0,
   },
-
   clockTimestamp: {
     type: Number,
     default: () => Math.floor(Date.now() / 1000),
@@ -125,7 +123,7 @@ module.exports = function(token, secret, opts = {}) {
   return new Promise((resolve, reject) => {
     try {
       // Type check the options & set defaults
-      opts = optionsModel(opts);
+      opts = parseModel(opts);
 
       // Validate the token
       if(!token) {
@@ -146,7 +144,6 @@ module.exports = function(token, secret, opts = {}) {
         throw new TokenError('Token invalid');
       }
 
-
       // Validate signature & secret
       const hasSign = parts[2].trim() !== '';
       if (!hasSign && secret) {
@@ -160,7 +157,7 @@ module.exports = function(token, secret, opts = {}) {
       // Limit algorithms
       if (!opts.algos) {
         const key = secret.toString();
-  
+
         if (key.includes('BEGIN CERTIFICATE') || key.includes('BEGIN PUBLIC KEY')) {
           opts.algos = ['RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512'];
         } else if (key.includes('BEGIN RSA PUBLIC KEY')) {

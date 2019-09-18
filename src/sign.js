@@ -13,14 +13,12 @@ const PAYLOAD_CLAIMS = {
 };
 
 // Factory function to model options
-const optionsModel = createModel({
+const parseModel = createModel({
   algo: {
     type: String,
     validator: value => ALGORITHMS.includes(value),
     default: 'HS256'
   },
-
-  // Payload claims
   audience: [String, Array],
   issuer: String,
   subject: String,
@@ -28,7 +26,6 @@ const optionsModel = createModel({
   expiresIn: Number,
   notBefore: Number,
   issuedAt: Number,
-
   encoding: {
     type: String,
     default: 'utf8'
@@ -39,13 +36,6 @@ const optionsModel = createModel({
   }
 });
 
-function setClaims(payload, opts) {
-  for (const [ claim, prop ] of Object.entries(PAYLOAD_CLAIMS)) {
-    if (prop in opts) {
-      payload[claim] = opts[prop];
-    }
-  }
-}
 /**
 * Creates a JWT token
 * @param {Object} payload - The payload to send
@@ -57,7 +47,7 @@ module.exports = function (payload, secret, opts = {}) {
   return new Promise((resolve, reject) => {
     try {
       // Set & validate the options
-      opts = optionsModel(opts);
+      opts = parseModel(opts);
       // Copy the payload
       payload = Object.assign({}, payload);
 
@@ -78,7 +68,13 @@ module.exports = function (payload, secret, opts = {}) {
     if (opts.expiresIn) {
       payload.exp = opts.expiresIn + timestamp;
     }
-    setClaims(payload, opts);
+
+    // Set shorthanded props
+    for (const [ claim, prop ] of Object.entries(PAYLOAD_CLAIMS)) {
+      if (prop in opts) {
+        payload[claim] = opts[prop];
+      }
+    }
 
     // Sign the token
     jws.createSign({
