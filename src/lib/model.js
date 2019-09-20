@@ -75,17 +75,23 @@ module.exports = function createModel(props) {
     return Object.keys(model).reduce((acc, key) => {
       const obj = model[key];
       let value = opts[key];
+      let validate = false;
 
       // Set default value (if available)
       if (typeof value == 'undefined') {
         const type = typeof obj.default;
+        validate = false;
 
         if (type != 'undefined') {
+          validate = true;
           value = type == 'function' ? obj.default() : obj.default;
         }
       }
 
-      validateProp(key, obj, value);
+      if (validate) {
+        validateProp(key, obj, value);
+      }
+
       acc[key] = value;
       return acc;
     }, {});

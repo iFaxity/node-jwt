@@ -103,7 +103,7 @@ Returns the jwt payload if it was ok. If it was not ok then a `TokenError` will 
 
   * `clockTimestamp {number}` - The time in which to compare to the timer claims such as `maxAge` and `issued at`. Default value is the current time in seconds.
 
-  * `clockTolerence {number|string}` - The amount of deadtime where its ok for the `clockTimestamp` to be overdue (in seconds) or a [zeit/ms](https://github.com/zeit/ms) timespan. Default value is 0.
+  * `clockTolerance {number|string}` - The amount of deadtime where its ok for the `clockTimestamp` to be overdue (in seconds) or a [zeit/ms](https://github.com/zeit/ms) timespan. Default value is 0.
 
   * `ignoreExpire {boolean}` - if `true` then expiration validation will be disabled and will accept tokens that are overdue. Not very secure to ignore so use carefully. Default value is `false`.
 

@@ -120,6 +120,16 @@ function validateClaims(payload, opts) {
 * @param {string} token - JWT token to validate
 * @param {string} secret - The crypto secret
 * @param {object} [opts] - Options to pass to the function
+* @param {Array} [opts.algos] - Algorithms to accept. By default it accepts all available algorithms.
+* @param {string|RegExp|Array} [opts.audience] - Audiences to accept. The array can be an array of strings and/or an array of regular expressions.
+* @param {string|Array} [opts.issuer] - Issuer(s) to accept.
+* @param {string} [opts.subject] - The subject to accept.
+* @param {string} [opts.nonce] - Nonce to check against. Nonce is used in the OpenID tokens. Is really just optional to add.
+* @param {number|string} [opts.maxAge=0] - The maxAge of the token to accept(in seconds) or a zeit/ms timespan. To increase security.
+* @param {number} [opts.clockTimestamp] - The time in which to compare to the timer claims such as maxAge and issued at.
+* @param {number|string} [opts.clockTolerance=0] - The amount of deadtime where its ok for the clockTimestamp to be overdue (in seconds) or a zeit/ms timespan
+* @param {boolean} [opts.ignoreExpire=false] - if true then expiration validation will be disabled and will accept tokens that are overdue. Not very secure to ignore so use carefully.
+* @param {boolean} [opts.ignoreNotBefore=false] - if true then the notBefore claim will not be validated. Not recommended to ignore so use carefully.
 * @returns {Promise} - If resolved the result is the payload.
 */
 module.exports = function(token, secret, opts = {}) {
