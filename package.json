@@ -11,8 +11,16 @@
     "index.js",
     "src/**/*"
   ],
+  "scripts": {
+    "test": "mocha --reporter progress",
+    "coverage": "nyc --reporter=lcov --reporter=text npm run test"
+  },
   "dependencies": {
     "jws": "^3.2.2",
     "ms": "^2.1.2"
+  },
+  "devDependencies": {
+    "mocha": "^6.2.0",
+    "nyc": "^14.1.1"
   }
 }
