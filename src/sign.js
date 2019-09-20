@@ -1,11 +1,11 @@
 // Module for signing and verifying JWT tokens
 const jws = require('jws');
+const { parseTime } = require('./lib/util');
 const createModel = require('./lib/model');
 const { TokenError } = require('./lib/errors');
 
 const { ALGORITHMS } = jws;
 const PAYLOAD_CLAIMS = {
-  nbf: 'notBefore',
   aud: 'audience',
   iss: 'issuer',
   sub: 'subject',
@@ -23,9 +23,9 @@ const parseModel = createModel({
   issuer: String,
   subject: String,
   keyId: String,
-  expiresIn: Number,
-  notBefore: Number,
-  issuedAt: Number,
+  expiresIn: [Number, String],
+  notBefore: [Number, String],
+  issuedAt: [Number, String],
   encoding: {
     type: String,
     default: 'utf8'
@@ -33,14 +33,24 @@ const parseModel = createModel({
   timestamp: {
     type: Boolean,
     default: true,
-  }
+  },
 });
 
 /**
 * Creates a JWT token
-* @param {Object} payload - The payload to send
-* @param {String} secret - The crypto secret
-* @param {Object} [opts] - Options to pass to the function
+* @param {object} payload - The payload to send
+* @param {string} secret - The crypto secret
+* @param {object} [opts] - Options to pass to the function
+* @param {string} [opts.algo=HS256] - Algorithm to sign the token with.
+* @param {string|Array} [opts.audience] - Which audience the token is intended for.
+* @param {string} [opts.issuer] - The name of the issuer of the token.
+* @param {subject} [opts.subject] - The token's subject i.e. it's use case.
+* @param {string} [opts.keyId] - Useful for when you have multiple keys to sign the tokens with.
+* @param {number|string} [opts.expiresIn] - The duration for which the token is valid (in seconds).
+* @param {number|string} [opts.notBefore] - Time before the token is valid (in seconds).
+* @param {number|string} [opts.issuedAt] - Time which the token was issued (in seconds). Will be automatically set if not assigned a value and if timestamp is not false.
+* @param {string} [opts.encoding=utf8] - Encoding of the full signed JWT. Default value is utf8. Available encodings are defined in the Nodejs documentation
+* @param {boolean} [opts.timestamp=true] - If false then the issued claim wont be set. Default value is true.
 * @returns {Promise} - If resolved the result is a generated JWT token.
 */
 module.exports = function (payload, secret, opts = {}) {
@@ -61,18 +71,21 @@ module.exports = function (payload, secret, opts = {}) {
     }
 
     // Set payload claims
-    const timestamp = Math.floor(Date.now() / 1000);
+    const now = Math.floor(Date.now() / 1000);
     if (opts.timestamp) {
-      payload.iat = opts.issuedAt || timestamp;
+      payload.iat = opts.issuedAt ? parseTime(opts.issuedAt, 'issuedAt') : now;
     }
     if (opts.expiresIn) {
-      payload.exp = opts.expiresIn + timestamp;
+      payload.exp = now + parseTime(opts.expiresIn, 'expiresIn');
+    }
+    if (opts.notBefore) {
+      payload.nbf = parseTime(opts.notBefore, 'notBefore');
     }
 
     // Set shorthanded props
-    for (const [ claim, prop ] of Object.entries(PAYLOAD_CLAIMS)) {
-      if (prop in opts) {
-        payload[claim] = opts[prop];
+    for (const [ claim, key ] of Object.entries(PAYLOAD_CLAIMS)) {
+      if (opts.hasOwnProperty(key)) {
+        payload[claim] = opts[key];
       }
     }
 

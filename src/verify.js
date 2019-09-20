@@ -1,6 +1,7 @@
 // Module for signing and verifying JWT tokens
 const jws = require('jws');
 const decode = require('./decode');
+const { parseTime } = require('./lib/util');
 const createModel = require('./lib/model');
 const { TokenError, TokenExpiredError, TokenNotBeforeError } = require('./lib/errors');
 
@@ -20,7 +21,7 @@ const parseModel = createModel({
     validator: value => value.trim() !== '',
   },
   maxAge: {
-    type: Number,
+    type: [Number, String],
     default: 0,
   },
   clockTimestamp: {
@@ -28,7 +29,7 @@ const parseModel = createModel({
     default: () => Math.floor(Date.now() / 1000),
   },
   clockTolerance: {
-    type: Number,
+    type: [Number, String],
     default: 0,
   },
   ignoreExpire: {
@@ -44,6 +45,7 @@ const parseModel = createModel({
 // Validates the optional claims
 function validateClaims(payload, opts) {
   const timestamp = opts.clockTimestamp;
+  const clockTolerance = parseTime(opts.clockTolerance, 'clockTolerance');
 
   // Audience claim
   if (opts.audience) {
@@ -71,7 +73,7 @@ function validateClaims(payload, opts) {
   }
   // JWT ID claim
   if (opts.jwtId && opts.jwtId != payload.jti) {
-    throw new TokenError('JWT Id not matched');
+    throw new TokenError('JWT ID not matched');
   }
   // Nonce claim
   if (opts.nonce && opts.nonce != payload.nonce) {
@@ -83,8 +85,8 @@ function validateClaims(payload, opts) {
   // Not before claim
   if (payload.nbf && !opts.ignoreNotBefore) {
     if (typeof payload.nbf != 'number') {
-      throw new TokenError('Invalid not before value');
-    } else if(payload.nbf > timestamp + opts.clockTolerance) {
+      throw new TokenError('Invalid notBefore value');
+    } else if (payload.nbf > timestamp + clockTolerance) {
       throw new TokenNotBeforeError('Token not active', new Date(payload.nbf * 1000));
     }
   }
@@ -93,19 +95,20 @@ function validateClaims(payload, opts) {
   if (payload.exp && !opts.ignoreExpire) {
     if (typeof payload.exp != 'number') {
       throw new TokenError('Invalid expire value');
-    } else if(timestamp >= payload.exp + opts.clockTolerance) {
+    } else if(timestamp >= payload.exp + clockTolerance) {
       throw new TokenExpiredError('Token expired', new Date(payload.exp * 1000));
     }
   }
 
   // Check if claim is within the specified max age
-  if(opts.maxAge && opts.maxAge > 0) {
+  if(opts.maxAge) {
     if (typeof payload.iat != 'number') {
       throw new TokenError('Payload iat required when maxAge is set');
     }
 
-    const maxAge = opts.maxAge + payload.iat + opts.clockTolerance;
-    if (timestamp >= maxAge) {
+    const maxAge = parseTime(opts.maxAge, 'maxAge');
+
+    if (timestamp >= (payload.iat + maxAge + clockTolerance)) {
       throw new TokenExpiredError('MaxAge exceeded', new Date(maxAge * 1000));
     }
   }
@@ -114,9 +117,9 @@ function validateClaims(payload, opts) {
 
 /**
 * Verifies the token's validity
-* @param {String} token - JWT token to validate
-* @param {String} secret - The crypto secret
-* @param {Object} [opts] - Options to pass to the function
+* @param {string} token - JWT token to validate
+* @param {string} secret - The crypto secret
+* @param {object} [opts] - Options to pass to the function
 * @returns {Promise} - If resolved the result is the payload.
 */
 module.exports = function(token, secret, opts = {}) {
@@ -174,13 +177,25 @@ module.exports = function(token, secret, opts = {}) {
       }
 
       // Now verify the JWT token
-      if (!jws.verify(token, header.alg, secret)) {
-        throw new TokenError('Invalid signature');
-      }
+      jws.createVerify({
+        algorithm: header.alg,
+        signature: token,
+        secret,
+      })
+      .once('done', valid => {
+        if (!valid) {
+          return reject(new TokenError('Invalid signature'));
+        }
 
-      // Validate payload claims against options
-      validateClaims(payload, opts);
-      resolve(payload);
+        try {
+          // Validate payload claims against options
+          validateClaims(payload, opts);
+          resolve(payload);
+        } catch (ex) {
+          reject(ex);
+        }
+      })
+      .once('error', reject);
     } catch (ex) {
       reject(ex);
     }

@@ -34,29 +34,29 @@ Signs a JWT token with a payload and a secret key.
 Returns a string with the signed JWT Token.
 
 #### Parameters
-* `payload {Object}` - The jwt payload. If you have no additional payload information just leave it as an empty object.
-* `secret {String}` - JWT Secret. Must be set if `algo` option is not 'none'.
-* `opts {Object}` - Optional options. If any of the optional options is not of a valid type or if its value is not valid then a `TokenError` will be thrown.
+* `payload {object}` - The jwt payload. If you have no additional payload information just leave it as an empty object.
+* `secret {string}` - JWT Secret. Must be set if `algo` option is not 'none'.
+* `opts {object}` - Optional options. If any of the optional options is not of a valid type or if its value is not valid then a `TokenError` will be thrown.
 
-  * `algo {String}` - Algorithm to sign the token with. Default value is `HS256`. Algorithms available are exported as `ALGORITHMS` in the module.
+  * `algo {string}` - Algorithm to sign the token with. Default value is `HS256`. Algorithms available are exported as `ALGORITHMS` in the module.
 
-  * `audience {String|Array}` - Which audience the token is intended for.
+  * `audience {string|Array}` - Which audience the token is intended for.
 
-  * `issuer {String}` - The name of the issuer of the token.
+  * `issuer {string}` - The name of the issuer of the token.
 
-  * `subject {String}` - The token's subject i.e. it's use case.
+  * `subject {string}` - The token's subject i.e. it's use case.
 
-  * `keyId {String}` - Useful for when you have multiple keys to sign the tokens with.
+  * `keyId {string}` - Useful for when you have multiple keys to sign the tokens with.
 
-  * `expiresIn {Number}` - The duration for which the token is valid (in seconds).
+  * `expiresIn {number|string}` - The duration for which the token is valid (in seconds) or a [zeit/ms](https://github.com/zeit/ms) timespan.
 
-  * `notBefore {Number}` - Time before the token is valid (in seconds).
+  * `notBefore {number|string}` - Time before the token is valid (in seconds) or a [zeit/ms](https://github.com/zeit/ms) timespan.
 
-  * `issuedAt {Number}` - Time which the token was issued (in seconds). Will be automatically set if not assigned a value and if 'timestamp' is not false.
+  * `issuedAt {number|string}` - Time which the token was issued (in seconds) or a [zeit/ms](https://github.com/zeit/ms) timespan. Will be automatically set if not assigned a value and if `timestamp` is not false.
 
-  * `encoding {String}` - Encoding of the full signed JWT. Default value is `utf8`. Available encodings are defined in the [Nodejs documentation](https://nodejs.org/api/buffer.html#buffer_buffers_and_character_encodings)
+  * `encoding {string}` - Encoding of the full signed JWT. Default value is `utf8`. Available encodings are defined in the [Nodejs documentation](https://nodejs.org/api/buffer.html#buffer_buffers_and_character_encodings)
 
-  * `timestamp {Boolean}` - If false then the issued claim wont be set. Default value is true.
+  * `timestamp {boolean}` - If false then the issued claim wont be set. Default value is true.
 
 #### Basic Usage
 
@@ -70,7 +70,7 @@ jwt.sign({}, 'a secret key');
 jwt.sign({ name: 'Foo bar' }, 'a secret key');
 
 // Sign with expiration date
-jwt({ name: 'Foo bar' }, 'a secret key', {
+jwt.sign({ name: 'Foo bar' }, 'a secret key', {
   expiresIn: 60*60, // 1 hour
   issuer: '`mywebsite.com',
 });
@@ -85,29 +85,29 @@ Verifies a JWT token's validity. Optional claims can be used to make the verific
 Returns the jwt payload if it was ok. If it was not ok then a `TokenError` will be thrown.
 
 #### Parameters
-* `payload {Object}` - The jwt payload. If you have no additional payload information just leave it as an empty object.
-* `secret {String}` - JWT Secret. Must be set if `algo` option is not 'none'.
-* `opts {Object}` - Optional options. If any of the optional options is not of a valid type or if its value is not valid then a `TokenError` will be thrown.
+* `payload {object}` - The jwt payload. If you have no additional payload information just leave it as an empty object.
+* `secret {string}` - JWT Secret. Must be set if `algo` option is not 'none'.
+* `opts {object}` - Optional options. If any of the optional options is not of a valid type or if its value is not valid then a `TokenError` will be thrown.
 
   * `algos {Array}` - Algorithms to accept. By default it accepts all available algorithms.
 
-  * `audience {String|RegExp|Array}` - Audiences to accept. The array can be an array of strings and/or an array of regular expressions.
+  * `audience {string|RegExp|Array}` - Audiences to accept. The array can be an array of strings and/or an array of regular expressions.
 
-  * `issuer {String|Array}` - Issuer(s) to accept.
+  * `issuer {string|Array}` - Issuer(s) to accept.
 
-  * `subject {String}` - The subject to accept.
+  * `subject {string}` - The subject to accept.
 
-  * `nonce {String}` - Nonce to check against. Nonce is used in the OpenID tokens. Is really just optional to add.
+  * `nonce {string}` - Nonce to check against. Nonce is used in the OpenID tokens. Is really just optional to add.
 
-  * `maxAge {Number}` - The maxAge of the token to accept. To increase security (in seconds). Default value is 0.
+  * `maxAge {number|string}` - The maxAge of the token to accept(in seconds) or a [zeit/ms](https://github.com/zeit/ms) timespan. To increase security. Default value is 0.
 
-  * `clockTimestamp {Number}` - The time in which to compare to the timer claims such as `maxAge` and `issued at`. Default value is the current time in seconds.
+  * `clockTimestamp {number}` - The time in which to compare to the timer claims such as `maxAge` and `issued at`. Default value is the current time in seconds.
 
-  * `clockTolerence {Number}` - The amount of deadtime where its ok for the `clockTimestamp` to be overdue. Default value is 0.
+  * `clockTolerence {number|string}` - The amount of deadtime where its ok for the `clockTimestamp` to be overdue (in seconds) or a [zeit/ms](https://github.com/zeit/ms) timespan. Default value is 0.
 
-  * `ignoreExpire {Boolean}` - if `true` then expiration checking will be disabled and will accept tokens that are overdue. Not very secure to ignore so use carefully. Default value is `false`.
+  * `ignoreExpire {boolean}` - if `true` then expiration validation will be disabled and will accept tokens that are overdue. Not very secure to ignore so use carefully. Default value is `false`.
 
-  * `ignoreNotBefore {Boolean}` - if `true` then `not before` checking if the token is activated will be disabled. Not recommended to ignore so use carefully. Default value is `false`.
+  * `ignoreNotBefore {boolean}` - if `true` then the `notBefore` claim will not be validated. Not recommended to ignore so use carefully. Default value is `false`.
 
 #### Basic Usage
 
@@ -139,8 +139,8 @@ Returns the tokens payload as an object or if 'complete' is true then it returns
 
 #### Parameters
 
-* `token {String}` - The jwt token to decode.
-* `complete {Boolean}` - If true the function returns headers & signature aswell.
+* `token {string}` - The jwt token to decode.
+* `complete {boolean}` - If true the function returns headers & signature aswell.
 
 #### Basic Usage
 
@@ -155,9 +155,9 @@ const decodedPayload = jwt.decode(token);
 const decoded = jwt.decode(token, true);
 /* Returns header & signature aswell
 {
-  header: Object,
-  payload: Object,
-  signature: String,
+  header: object,
+  payload: object,
+  signature: string,
 }
 */
 ```
